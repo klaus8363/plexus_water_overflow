@@ -1,5 +1,6 @@
 
 class Glass(object):
+    # Assumption: all amount/capacity in this object is in mL
     def __init__(self, i, j, capacity=250, amount=0):
         self.capacity = capacity
         self.amount = amount
@@ -9,28 +10,21 @@ class Glass(object):
 
     def will_overflow(self, amount_ml):
         if self.amount + amount_ml > self.capacity:
-            # print("WO", self.amount, amount_ml, self.capacity)
             return True
         return False
-
-    def is_full(self):
-        return self.amount == self.capacity
 
     def get_remaining_capacity(self):
         return self.capacity - self.amount
 
     def get_overflow(self, amount_to_add):
         if amount_to_add > self.get_remaining_capacity():
-            # print("Amt to add", amount_to_add, "capacity", self.get_remaining_capacity())
             return amount_to_add - self.get_remaining_capacity()
         return False
 
     def fill(self, amount_ml):
         overflow = 0
-        amt_to_add = 0
 
         if self.get_overflow(amount_ml):
-            # print("entered")
             overflow = self.get_overflow(amount_ml)
             self.amount = self.capacity
             self.overflow += overflow
@@ -68,127 +62,96 @@ class Glass(object):
             return str(self.amount) + "-"
 
         return "-" + str(self.amount) + "-"
+
+
+# Assumptions:
 '''
-glass = Glass(0, 0)
-
-
-print(glass, glass.overflow, glass.fill(1000))
-glass.fill(1000)
-
-print(glass, glass.overflow)
+1) this class only accepts liters as input. It will be converted to ml then processed.
+2) this only accepts correct input. Out of bounds i, and j values will return an error 
 '''
+class GlassFiller(object):
 
-def initialize_row(row_):
-    print("ROW INPUT", row_)
-    glasses = []
+    def __init__(self, input_liters=1.5,
+        i_tocheck=0, j_tocheck=0, show_all_values=False):
 
-    for i in range(row_ + 1):
-        print("I, range, ", i, row_)
-        glass = Glass(row_, i)
-        glasses.append(glass)
-    return glasses
+        self.input_liters = input_liters
+        self.i_tocheck = i_tocheck
+        self.j_tocheck = j_tocheck
+        self.glass_list = []
+        self.show_all_values = show_all_values
 
+    def initialize_row(self, row_):
+        glasses = []
 
-def fill_glasses(liters, i, j):
-    glass_list = []
+        for i in range(row_ + 1):
+            glass = Glass(row_, i)
+            glasses.append(glass)
+        return glasses
 
-    amount_ml = liters * 1000
+    def fill_glasses(self):
+        i = self.i_tocheck
+        j = self.j_tocheck
+        amount_ml = self.input_liters * 1000
 
-    current_row = 0
-    next_row_needed = True
+        current_row = 0
+        next_row_needed = True
 
-    while next_row_needed:
-        glasses = initialize_row(current_row)
-        glass_list.append(glasses)
+        while next_row_needed:
+            glasses = self.initialize_row(current_row)
+            self.glass_list.append(glasses)
 
-        glass_overflows = False
-        print("created glasses:", len(glasses))
-        for glass in glasses:
+            glass_overflows = False
+            for glass in glasses:
 
-            if current_row == 0:
-                overflow = glass.fill(amount_ml)
-                if overflow > 0:
-                    glass_overflows = True
-
-            else:
-                print("I is now:", current_row)
-                print("glass location: ", glass.i, glass.j)
-                
-                if glass.get_glass_location_upper_left() is not None:
-                    ul_i, ul_j = glass.get_glass_location_upper_left()
-                    glass_parent = glass_list[ul_i][ul_j]
-                    print("UPPERLEFT", ul_i, ul_j)
-                    print("Glass parent:", glass_parent.overflow)
-
-                    overflow = glass.fill(glass_parent.overflow / 2)
-
+                if current_row == 0:
+                    overflow = glass.fill(amount_ml)
                     if overflow > 0:
                         glass_overflows = True
 
-                if glass.get_glass_location_upper_right() is not None:
-                    ur_i, ur_j = glass.get_glass_location_upper_right()
+                else:
+                    if glass.get_glass_location_upper_left() is not None:
+                        ul_i, ul_j = glass.get_glass_location_upper_left()
+                        glass_parent = self.glass_list[ul_i][ul_j]
 
-                    glass_parent = glass_list[ur_i][ur_j]
-                    print("UPPERIGHT", ur_i, ur_j)
-                    print("Glass parent:", glass_parent.overflow)
+                        overflow = glass.fill(glass_parent.overflow / 2)
 
-                    overflow = glass.fill(glass_parent.overflow / 2)
+                        if overflow > 0:
+                            glass_overflows = True
 
-                    if overflow > 0:
-                        glass_overflows = True
+                    if glass.get_glass_location_upper_right() is not None:
+                        ur_i, ur_j = glass.get_glass_location_upper_right()
 
+                        glass_parent = self.glass_list[ur_i][ur_j]
+                        overflow = glass.fill(glass_parent.overflow / 2)
 
+                        if overflow > 0:
+                            glass_overflows = True
 
-        current_row += 1
-        if glass_overflows:
-            next_row_needed = True
-        else:
-            next_row_needed = False
-
-
-    for gl in glass_list:
-        for a in gl:
-            print("S", a)
-
-
-
-
-'''
-    while next_row_needed:
-        glasses = instantiate_row(i)
-        glass_list.append(glasses)
-
-        glass_overflows = False
-        print("I is", i, *glasses)
-        for glass in glasses:
-
-            if i == 0:
-                will_overflow = glass.fill(amount_ml)
+            current_row += 1
+            if glass_overflows:
+                next_row_needed = True
             else:
+                next_row_needed = False
 
-                if glass.get_glass_location_upper_left():
-                    ul_i, ul_j = glass.get_glass_location_upper_left()
+        if self.show_all_values:
+            a = 0
+            for glass_row in self.glass_list:
+                print("i={}".format(a))
+                b = 0
+                for glass in glass_row:
+                    print("j={}: value={}".format(b, glass.amount))
+                    b += 1
+                a += 1
+                print("-----------------")
 
-                    print("Upperleft:", ul_i, ul_j, glass_list[ul_i, ul_j])
+        return self.glass_list[i][j].amount
 
-                    break
 
-            
+def main():
+    k = GlassFiller(1.5, 2, 2, True)
+    print("Value at i={}, j={} : {}".format(
+        k.i_tocheck, k.j_tocheck, k.fill_glasses()))
 
-            if will_overflow:
-                ## need new rows
-                amount_ml -= glass.capacity
-                print("A", glass)
-                glass_overflows = True
 
-        i += 1
-
-        if glass_overflows:
-            next_row_needed = True
-        else:
-            next_row_needed = False
-
-'''
-
-fill_glasses(1.5, 0, 0)
-
+if __name__ == "__main__":
+    main()
