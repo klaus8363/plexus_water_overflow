@@ -1,3 +1,4 @@
+import sys
 
 class Glass(object):
     # Assumption: all amount/capacity in this object is in mL
@@ -148,7 +149,17 @@ class GlassFiller(object):
 
 
 def main():
-    k = GlassFiller(1.5, 2, 2, True)
+    print(len(sys.argv))
+    i = 2
+    j = 2
+    liters = 1.5
+
+    if len(sys.argv) >= 4:
+        liters = float(sys.argv[1])
+        i = int(sys.argv[2])
+        j = int(sys.argv[3])
+
+    k = GlassFiller(liters, i, j, True)
     print("Value at i={}, j={} : {}".format(
         k.i_tocheck, k.j_tocheck, k.fill_glasses()))
 
